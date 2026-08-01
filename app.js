@@ -22,8 +22,7 @@ async function iniciar() {
 function aplicarConfiguracion(config) {
   const nombre = config["Nombre del sitio"] || "GOMEZA";
   document.querySelectorAll(".brand span, #nombreSitio").forEach(el => el.textContent = nombre);
-  const frase = String(config["Frase de bienvenida"] || "").trim();
-  if (frase) document.querySelector("#fraseBienvenida").textContent = frase;
+  aplicarTitulo(config);
   const aviso = document.querySelector("#anuncio");
   if (si(config["Mostrar mensaje temporal"]) && config["Mensaje temporal"]) {
     document.querySelector("#anuncioTexto").textContent = config["Mensaje temporal"];
@@ -40,7 +39,80 @@ function aplicarConfiguracion(config) {
   });
   const redes = [["Facebook", "Facebook"], ["Instagram", "Instagram"], ["TikTok", "TikTok"]].filter(([clave]) => config[clave]);
   document.querySelector("#redes").innerHTML = redes.map(([clave, nombreRed]) => `<a href="${seguro(config[clave])}" target="_blank" rel="noopener">${nombreRed}</a>`).join("");
-  document.documentElement.dataset.tema = normalizar(config["Tema visual"] || "Normal");
+  const tema = normalizar(config["Tema visual"] || "Normal");
+  document.documentElement.dataset.tema = tema;
+  aplicarBandera(config);
+  aplicarFotoPortada(config);
+  aplicarEfectos(config, tema);
+}
+
+function aplicarTitulo(config) {
+  const lineas = [1, 2, 3].map(n => String(config[`Texto de la línea ${n}`] || "").trim());
+  const hayLineas = lineas.some(Boolean);
+  if (!hayLineas) {
+    lineas[0] = String(config["Frase de bienvenida"] || "Construimos tu próxima gran idea.").trim();
+  }
+  lineas.forEach((texto, i) => {
+    const elemento = document.querySelector(`#tituloLinea${i + 1}`);
+    elemento.textContent = texto;
+    elemento.hidden = !texto;
+    elemento.style.color = colorTitulo(config[`Color de la línea ${i + 1}`], config["Color de texto personalizado"]);
+  });
+}
+
+function colorTitulo(nombre, personalizado) {
+  const colores = { rojo: "#ef3636", blanco: "#ffffff", negro: "#071719", turquesa: "#45c7ce", dorado: "#e6bd55", verde: "#42c98a", azul: "#4da3ff" };
+  const clave = normalizar(nombre || "Blanco");
+  if (clave === "personalizado" && /^#[0-9a-f]{6}$/i.test(String(personalizado || ""))) return personalizado;
+  return colores[clave] || "#ffffff";
+}
+
+function aplicarBandera(config) {
+  const bandera = document.querySelector("#banderaDecorativa");
+  bandera.hidden = !si(config["Mostrar bandera"]);
+  if (bandera.hidden) return;
+  bandera.dataset.posicion = normalizar(config["Posición de la bandera"] || "Junto al título");
+  bandera.dataset.animacion = normalizar(config["Animación de la bandera"] || "Ondear suave");
+  bandera.dataset.intensidad = normalizar(config["Intensidad de la bandera"] || "Normal");
+  const imagen = urlImagen(config["Imagen de bandera"]);
+  const img = document.querySelector("#banderaImagen");
+  img.hidden = !imagen;
+  if (imagen) img.src = imagen;
+  bandera.classList.toggle("custom-image", Boolean(imagen));
+}
+
+function aplicarFotoPortada(config) {
+  const foto = document.querySelector("#fotoPortada");
+  const url = urlImagen(config["Foto principal de portada"]);
+  foto.hidden = !si(config["Mostrar foto de portada"]) || !url;
+  if (foto.hidden) return;
+  foto.style.backgroundImage = `url("${url.replace(/"/g, "%22")}")`;
+  document.querySelector(".hero").dataset.ubicacionFoto = normalizar(config["Ubicación de la foto"] || "Lado derecho");
+  foto.dataset.animacion = normalizar(config["Animación de la foto"] || "Ninguna");
+  foto.dataset.oscurecer = normalizar(config["Oscurecer la foto"] || "Normal");
+}
+
+function aplicarEfectos(config, tema) {
+  const contenedor = document.querySelector("#efectosTematicos");
+  contenedor.innerHTML = "";
+  if (!si(config["Mostrar decoración temática"])) return;
+  let efecto = normalizar(config["Efecto festivo"] || "Automático");
+  if (efecto === "automatico" && si(config["Usar efecto automático del tema"])) {
+    const automaticos = { "fiestas-patrias":"bandera-ondeando", navidad:"nieve", "ano-nuevo":"fuegos-artificiales", "dia-de-la-madre":"petalos", "dia-del-padre":"destellos", "dia-de-la-mujer":"petalos", halloween:"luces", "aniversario-gomeza":"confeti" };
+    efecto = automaticos[tema] || "destellos";
+  }
+  if (["ninguno", "automatico"].includes(efecto)) return;
+  contenedor.dataset.efecto = efecto;
+  contenedor.dataset.animacion = normalizar(config["Animación del efecto"] || "Suave");
+  contenedor.dataset.intensidad = normalizar(config["Intensidad del efecto"] || "Normal");
+  const cantidad = { discreta: 12, normal: 20, alegre: 32, intensa: 48 }[contenedor.dataset.intensidad] || 20;
+  for (let i = 0; i < cantidad; i++) {
+    const particula = document.createElement("i");
+    particula.style.setProperty("--x", `${(i * 37) % 100}%`);
+    particula.style.setProperty("--delay", `${-(i % 12)}s`);
+    particula.style.setProperty("--dur", `${6 + (i % 7)}s`);
+    contenedor.appendChild(particula);
+  }
 }
 
 function pintarBiblioteca(lista) {
@@ -91,3 +163,11 @@ function si(valor) { return ["si", "sí", "yes", "true", "1"].includes(String(va
 function normalizar(valor) { return String(valor).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-"); }
 function escapar(valor) { const div = document.createElement("div"); div.textContent = valor || ""; return div.innerHTML; }
 function seguro(valor) { try { const u = new URL(valor); return ["http:", "https:"].includes(u.protocol) ? u.href : "#"; } catch { return "#"; } }
+function urlImagen(valor) {
+  const texto = String(valor || "").trim();
+  if (!texto || /IDENTIFICADOR/i.test(texto)) return "";
+  const drive = texto.match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+  if (drive) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(drive[1])}&sz=w1600`;
+  const url = seguro(texto);
+  return url === "#" ? "" : url;
+}
