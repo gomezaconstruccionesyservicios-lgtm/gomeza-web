@@ -17,7 +17,7 @@ nav a:hover { opacity:1; color:var(--aqua); }
 .eyebrow,.section-tag { text-transform:uppercase; letter-spacing:.22em; font-size:.72rem; font-weight:800; display:flex; align-items:center; gap:12px; color:var(--aqua); }
 .eyebrow span { width:34px; height:1px; background:var(--aqua); }
 h1,h2,h3 { font-family:var(--font-display),sans-serif; margin:0; }
-h1 { font-size:clamp(3.5rem,7vw,7.6rem); letter-spacing:-.065em; line-height:.87; font-weight:650; max-width:920px; }
+h1 { font-size:clamp(3.5rem,7vw,7.6rem); letter-spacing:-.065em; line-height:.87; font-weight:650; max-width:920px; white-space:pre-line; overflow-wrap:anywhere; }
 h1 em,h2 em { color:var(--aqua); font-style:normal; }
 .hero-text { max-width:600px; color:#bfd0d1; font-size:1.08rem; line-height:1.75; margin:32px 0; }
 .hero-actions { display:flex; align-items:center; gap:28px; flex-wrap:wrap; }
