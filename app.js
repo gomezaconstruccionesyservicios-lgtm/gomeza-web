@@ -22,7 +22,7 @@ async function iniciar() {
 function aplicarConfiguracion(config) {
   const nombre = config["Nombre del sitio"] || "GOMEZA";
   document.querySelectorAll(".brand span, #nombreSitio").forEach(el => el.textContent = nombre);
-  const frase = config["Frase de bienvenida"];
+  const frase = String(config["Frase de bienvenida"] || "").trim();
   if (frase) document.querySelector("#fraseBienvenida").textContent = frase;
   const aviso = document.querySelector("#anuncio");
   if (si(config["Mostrar mensaje temporal"]) && config["Mensaje temporal"]) {
