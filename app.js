@@ -30,10 +30,14 @@ function aplicarConfiguracion(config) {
     aviso.hidden = false;
     document.body.classList.add("has-announcement");
   }
-  const telefono = String(config["WhatsApp"] || "").replace(/\D/g, "");
-  const mensaje = encodeURIComponent(config["Mensaje de WhatsApp"] || "Hola, deseo información sobre GOMEZA");
-  const whatsapp = telefono ? `https://wa.me/${telefono}?text=${mensaje}` : "#contacto";
-  document.querySelectorAll(".whatsapp-link").forEach(el => { el.href = whatsapp; el.target = telefono ? "_blank" : ""; });
+  const enlaceConfigurado = String(config["Enlace de WhatsApp"] || "").trim();
+  const enlaceSeguro = seguro(enlaceConfigurado);
+  const whatsapp = enlaceSeguro !== "#" ? enlaceSeguro : "#contacto";
+  document.querySelectorAll(".whatsapp-link").forEach(el => {
+    el.href = whatsapp;
+    el.target = whatsapp !== "#contacto" ? "_blank" : "";
+    el.rel = whatsapp !== "#contacto" ? "noopener noreferrer" : "";
+  });
   const redes = [["Facebook", "Facebook"], ["Instagram", "Instagram"], ["TikTok", "TikTok"]].filter(([clave]) => config[clave]);
   document.querySelector("#redes").innerHTML = redes.map(([clave, nombreRed]) => `<a href="${seguro(config[clave])}" target="_blank" rel="noopener">${nombreRed}</a>`).join("");
   document.documentElement.dataset.tema = normalizar(config["Tema visual"] || "Normal");
