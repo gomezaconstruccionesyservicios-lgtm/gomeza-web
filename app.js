@@ -22,6 +22,7 @@ async function iniciar() {
 function aplicarConfiguracion(config) {
   const nombre = config["Nombre del sitio"] || "GOMEZA";
   document.querySelectorAll(".brand span, #nombreSitio").forEach(el => el.textContent = nombre);
+  aplicarTipografias(config);
   aplicarTitulo(config);
   const aviso = document.querySelector("#anuncio");
   if (si(config["Mostrar mensaje temporal"]) && config["Mensaje temporal"]) {
@@ -58,6 +59,20 @@ function aplicarTitulo(config) {
     elemento.hidden = !texto;
     elemento.style.color = colorTitulo(config[`Color de la línea ${i + 1}`], config["Color de texto personalizado"]);
   });
+  const titulo = document.querySelector("#fraseBienvenida");
+  titulo.dataset.tamano = normalizar(config["Tamaño de títulos"] || "Normal");
+  titulo.style.setProperty("--title-length", Math.max(...lineas.map(x => x.length), 8));
+}
+
+function aplicarTipografias(config) {
+  const titulo = String(config["Fuente de títulos"] || "Syne").trim();
+  const texto = String(config["Fuente de textos"] || "Manrope").trim();
+  const familias = [...new Set([titulo, texto])].map(x => `family=${encodeURIComponent(x).replace(/%20/g, "+")}:wght@400;600;700;800`).join("&");
+  let link = document.querySelector("#fuentesDinamicas");
+  if (!link) { link = document.createElement("link"); link.id = "fuentesDinamicas"; link.rel = "stylesheet"; document.head.appendChild(link); }
+  link.href = `https://fonts.googleapis.com/css2?${familias}&display=swap`;
+  document.documentElement.style.setProperty("--font-display", `"${titulo}"`);
+  document.documentElement.style.setProperty("--font-body", `"${texto}"`);
 }
 
 function colorTitulo(nombre, personalizado) {
@@ -79,6 +94,10 @@ function aplicarBandera(config) {
   img.hidden = !imagen;
   if (imagen) img.src = imagen;
   bandera.classList.toggle("custom-image", Boolean(imagen));
+  const posicion = bandera.dataset.posicion;
+  if (posicion === "sobre-el-logo") document.querySelector(".hero-visual").appendChild(bandera);
+  else if (posicion === "como-fondo") document.querySelector(".hero").appendChild(bandera);
+  else document.querySelector("#fraseBienvenida").after(bandera);
 }
 
 function aplicarFotoPortada(config) {
